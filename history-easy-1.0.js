@@ -53,7 +53,6 @@ function history_control_object (settings) {
   }
   
   // Set temporary variables.
-  console.log (hash)
   var current_title    = extras[hash].title
   var current_url      = extras[hash].url
   var current_callback = extras[hash].callback
