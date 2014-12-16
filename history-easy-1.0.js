@@ -15,6 +15,7 @@ function history_control_object (settings) {
  history_main.initial_page          = settings.initial_page        // The initial page (default variable "page") that history should be at.
  history_main.app_url_vars          = settings.app_url_vars        // A set of variables that store the current history state.
  history_main.can_do_popstate       = settings.can_do_popstate     // If defined, accept or reject a popstate by returning true or false.
+ history_main.current_state = {}
  
  var extras = {}
  var next_title = undefined, next_url = undefined, next_callback = undefined
@@ -23,11 +24,14 @@ function history_control_object (settings) {
  
  // Add a pop state event listener.
  window.addEventListener ('popstate', function (evt) {
-  if ((typeof history_main.can_do_popstate != "undefined") && (!history_main.can_do_popstate(evt.state))) return
+  if ((typeof history_main.can_do_popstate != "undefined") && (!history_main.can_do_popstate(evt.state))) {
+   set_page_state (history_main.current_state, undefined, false, true)
+   return
+  }
   if (evt.state == null) return; set_page_state (evt.state, undefined, false)
  })
 
- function set_page_state (new_state, settings, record_history) {
+ function set_page_state (new_state, settings, record_history, ignore_history) {
   // Update history_main.app_url_vars to match new_state.
   if (typeof history_main.app_url_vars != "undefined") {
    for (var i in history_main.app_url_vars) {delete (history_main.app_url_vars[i])}
@@ -35,6 +39,7 @@ function history_control_object (settings) {
   }
   
   var hash = formUrlVars (new_state, {record_undefined_values: false})
+  
   // Set the title, url, and callback, if they exist in settings.
   if (typeof settings != "undefined") {
    if (typeof settings.title    != "undefined") history_main.title    = settings.title
@@ -56,6 +61,8 @@ function history_control_object (settings) {
    history_main[var_name] = new_state[var_name]
   }
   
+  console.dir (extras[hash])
+  
   // Set temporary variables.
   var current_title    = extras[hash].title
   var current_url      = extras[hash].url
@@ -66,15 +73,22 @@ function history_control_object (settings) {
   
   // Set the title and run the HTML5 History API pushState / replaceState function.
   document.title = (typeof current_title != "undefined") ? current_title : ""
-  if (record_history == true) history[(first_load ? 'replace' : 'push') + 'State'] (new_state, current_title, current_url)
+  if ((record_history == true) || (!!ignore_history)) history[(first_load ? 'replace' : 'push') + 'State'] (new_state, current_title, current_url)
+  
+  // Update the current state variable.
+  history_main.current_state = new_state
   
   if (first_load == true) first_load = false
   
-  // Run the ".onstatechange" function property if it exists, then run the "current_callback" function.
-  if (typeof history_main.onstatechange != "undefined") {
-   history_main.onstatechange (new_state, function () {if (typeof current_callback != "undefined") current_callback ()})
-  } else {
-   if (typeof current_callback != "undefined") current_callback ()
+  // Run the ".onstatechange" function property if it exists, then run the "current_callback" function. Otherwise, just run the "current_callback" function.
+  // Don't run anything if "ignore_history" is true.
+  if (!!ignore_history) {
+   if (typeof history_main.onstatechange != "undefined") {
+    history_main.onstatechange (new_state, function () {
+    if (typeof current_callback != "undefined") current_callback ()})
+   } else {
+    if (typeof current_callback != "undefined") current_callback ()
+   }
   }
  }
  
@@ -144,37 +158,4 @@ function history_control_object (settings) {
   }
   return copy
  }
-}
-
-
-function androidHideKeyboard() {
-  //this set timeout needed for case when hideKeyborad
-  //is called inside of 'onfocus' event handler
-  setTimeout(function() {
-
-    //creating temp field
-    var field = document.createElement('input');
-    field.setAttribute('type', 'text');
-    //hiding temp field from peoples eyes
-    //-webkit-user-modify is nessesary for Android 4.x
-    field.setAttribute('style', 'position:absolute; top: 0px; opacity: 0; -webkit-user-modify: read-write-plaintext-only; left:0px;');
-    document.body.appendChild(field);
-
-    //adding onfocus event handler for out temp field
-    field.onfocus = function(){
-      //this timeout of 200ms is nessasary for Android 2.3.x
-      setTimeout(function() {
-
-        field.setAttribute('style', 'display:none;');
-        setTimeout(function() {
-          document.body.removeChild(field);
-          document.body.focus();
-        }, 14);
-
-      }, 200);
-    };
-    //focusing it
-    field.focus();
-
-  }, 50);
 }
