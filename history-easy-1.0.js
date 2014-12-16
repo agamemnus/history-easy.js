@@ -82,7 +82,7 @@ function history_control_object (settings) {
   
   // Run the ".onstatechange" function property if it exists, then run the "current_callback" function. Otherwise, just run the "current_callback" function.
   // Don't run anything if "ignore_history" is true.
-  if (!!ignore_history) {
+  if (!ignore_history) {
    if (typeof history_main.onstatechange != "undefined") {
     history_main.onstatechange (new_state, function () {
     if (typeof current_callback != "undefined") current_callback ()})
