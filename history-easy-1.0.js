@@ -1,4 +1,4 @@
-// History-easy.js version 1.0 by Michael Romanovsky. License: public domain.
+// History-easy.js version 1.01 by Michael Romanovsky. License: public domain.
 
 // If you find this useful and would like to leave a financial gratuity, you can use this link:
 // https://www.gittip.com/agamemnus/
@@ -8,12 +8,13 @@ function history_control_object (settings) {
  if (typeof settings == "undefined") settings = {}
  
  history_main.overwrite_first_state = ((typeof settings.overwrite_first_state != "undefined") && (settings.overwrite_first_state == false)) ? false : true
- var var_name = (typeof settings.var_name != "undefined") ? settings.var_name : 'page'
- history_main.base_filename = (typeof settings.base_filename != "undefined") ? settings.base_filename : ""
- history_main.onbeforestatechange = settings.onbeforestatechange // Function to run before the history state change. If it does run the callback (3rd parameter), no history state change is attempted.
- history_main.onstatechange = settings.onstatechange // Function to run after the history state change.
- history_main.initial_page = settings.initial_page // The initial page (default variable "page") that history should be at.
- history_main.app_url_vars = settings.app_url_vars // A set of variables that store the current history state.
+ var var_name                       = (typeof settings.var_name      != "undefined") ? settings.var_name      : 'page'
+ history_main.base_filename         = (typeof settings.base_filename != "undefined") ? settings.base_filename : ""
+ history_main.onbeforestatechange   = settings.onbeforestatechange // Function to run before the history state change. If it does run the callback (3rd parameter), no history state change is attempted.
+ history_main.onstatechange         = settings.onstatechange       // Function to run after the history state change.
+ history_main.initial_page          = settings.initial_page        // The initial page (default variable "page") that history should be at.
+ history_main.app_url_vars          = settings.app_url_vars        // A set of variables that store the current history state.
+ history_main.can_do_popstate       = settings.can_do_popstate     // If defined, accept or reject a popstate by returning true or false.
  
  var extras = {}
  var next_title = undefined, next_url = undefined, next_callback = undefined
@@ -21,7 +22,10 @@ function history_control_object (settings) {
  var first_load = true
  
  // Add a pop state event listener.
- window.addEventListener ('popstate', function (evt) {if (evt.state == null) return; set_page_state (evt.state, undefined, false)})
+ window.addEventListener ('popstate', function (evt) {
+  if ((typeof history_main.can_do_popstate != "undefined") && (!history_main.can_do_popstate(evt.state))) return
+  if (evt.state == null) return; set_page_state (evt.state, undefined, false)
+ })
 
  function set_page_state (new_state, settings, record_history) {
   // Update history_main.app_url_vars to match new_state.
@@ -33,8 +37,8 @@ function history_control_object (settings) {
   var hash = formUrlVars (new_state, {record_undefined_values: false})
   // Set the title, url, and callback, if they exist in settings.
   if (typeof settings != "undefined") {
-   if (typeof settings.title != "undefined") history_main.title = settings.title
-   if (typeof settings.url != "undefined") history_main.url = settings.url
+   if (typeof settings.title    != "undefined") history_main.title    = settings.title
+   if (typeof settings.url      != "undefined") history_main.url      = settings.url
    if (typeof settings.callback != "undefined") history_main.callback = settings.callback
    
    if (typeof history_main.url == "undefined") {
@@ -44,17 +48,17 @@ function history_control_object (settings) {
   }
   
   if (record_history == true) {
-   extras[hash] = {}
-   extras[hash].title = history_main.title
-   extras[hash].url = history_main.url
+   extras[hash]          = {}
+   extras[hash].title    = history_main.title
+   extras[hash].url      = history_main.url
    extras[hash].callback = history_main.callback
   } else {
    history_main[var_name] = new_state[var_name]
   }
   
   // Set temporary variables.
-  var current_title = extras[hash].title
-  var current_url = extras[hash].url
+  var current_title    = extras[hash].title
+  var current_url      = extras[hash].url
   var current_callback = extras[hash].callback
   
   // Clear history_main.url and history_main.callback.
@@ -77,9 +81,9 @@ function history_control_object (settings) {
  
  history_main.load_page = function (new_state, settings) {
   if (typeof new_state == "undefined") new_state = {}
-  if (typeof settings == "undefined") settings = {}
+  if (typeof settings  == "undefined") settings  = {}
   new_state = shallowcopy (new_state)
-  settings = shallowcopy (settings)
+  settings  = shallowcopy (settings)
   // On first load, run a destructive function that merges the contents window.location with "history_main.app_url_vars".
   // On first load, set the initial page variable's (default: "page") value.
   if ((first_load == true) && (history_main.overwrite_first_state == true)) {
@@ -99,7 +103,7 @@ function history_control_object (settings) {
  
  // Form a GET URL string from an array.
  function formUrlVars (variable_list, options) {
-  if (typeof options == "undefined") options = {}
+  if (typeof options                         == "undefined") options = {}
   if (typeof options.record_undefined_values == "undefined") options.record_undefined_values = true
   var return_value = ""
   for (var i in variable_list) {
@@ -133,7 +137,44 @@ function history_control_object (settings) {
  function shallowcopy (source) {
   if ((typeof source !== 'object') || (source == null)) return source
   var copy = ((source instanceof Array) ? [] : {})
-  for (var i in source) {copy[i] = source[i]}
+  for (var i in source) {
+   var property = source[i]
+   if ((typeof property != 'object') || (!(property instanceof Array))) {copy[i] = property; continue}
+   copy[i] = property.slice ()
+  }
   return copy
  }
+}
+
+
+function androidHideKeyboard() {
+  //this set timeout needed for case when hideKeyborad
+  //is called inside of 'onfocus' event handler
+  setTimeout(function() {
+
+    //creating temp field
+    var field = document.createElement('input');
+    field.setAttribute('type', 'text');
+    //hiding temp field from peoples eyes
+    //-webkit-user-modify is nessesary for Android 4.x
+    field.setAttribute('style', 'position:absolute; top: 0px; opacity: 0; -webkit-user-modify: read-write-plaintext-only; left:0px;');
+    document.body.appendChild(field);
+
+    //adding onfocus event handler for out temp field
+    field.onfocus = function(){
+      //this timeout of 200ms is nessasary for Android 2.3.x
+      setTimeout(function() {
+
+        field.setAttribute('style', 'display:none;');
+        setTimeout(function() {
+          document.body.removeChild(field);
+          document.body.focus();
+        }, 14);
+
+      }, 200);
+    };
+    //focusing it
+    field.focus();
+
+  }, 50);
 }
