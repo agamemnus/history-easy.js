@@ -61,8 +61,6 @@ function history_control_object (settings) {
    history_main[var_name] = new_state[var_name]
   }
   
-  console.dir (extras[hash])
-  
   // Set temporary variables.
   var current_title    = extras[hash].title
   var current_url      = extras[hash].url
