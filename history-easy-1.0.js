@@ -1,4 +1,4 @@
-// History-easy.js version 1.01 by Michael Romanovsky. License: public domain.
+// History-easy.js version 1.02 by Michael Romanovsky. License: public domain.
 
 // If you find this useful and would like to leave a financial gratuity, you can use this link:
 // https://www.gittip.com/agamemnus/
@@ -21,13 +21,15 @@ function history_control_object (settings) {
  var next_title = undefined, next_url = undefined, next_callback = undefined
   
  var first_load = true
+ var history_control_locked = false
  
  // Add a pop state event listener.
  window.addEventListener ('popstate', function (evt) {
-  if ((typeof history_main.can_do_popstate != "undefined") && (!history_main.can_do_popstate(evt.state))) {
+  if (history_control_locked || ((typeof history_main.can_do_popstate != "undefined") && (!history_main.can_do_popstate(evt.state)))) {
    set_page_state (history_main.current_state, undefined, false, true)
    return
   }
+  history_control_locked = true
   if (evt.state == null) return; set_page_state (evt.state, undefined, false)
  })
 
@@ -83,8 +85,10 @@ function history_control_object (settings) {
   if (!ignore_history) {
    if (typeof history_main.onstatechange != "undefined") {
     history_main.onstatechange (new_state, function () {
+    history_control_locked = false
     if (typeof current_callback != "undefined") current_callback ()})
    } else {
+     history_control_locked = false
     if (typeof current_callback != "undefined") current_callback ()
    }
   }
@@ -92,6 +96,7 @@ function history_control_object (settings) {
  
  
  history_main.load_page = function (new_state, settings) {
+  history_control_locked = true
   if (typeof new_state == "undefined") new_state = {}
   if (typeof settings  == "undefined") settings  = {}
   new_state = shallowcopy (new_state)
