@@ -96,6 +96,7 @@ function history_control_object (settings) {
  
  
  history_main.load_page = function (new_state, settings) {
+  if (history_control_locked) return
   history_control_locked = true
   if (typeof new_state == "undefined") new_state = {}
   if (typeof settings  == "undefined") settings  = {}
