@@ -23,12 +23,22 @@ function history_control_object (settings) {
  var first_load = true
  var history_control_locked = false
  
+ var ever_pushed_something = false // Needed for browsers (like iOS8) that pop the state at page load.
+ var initial_url = location.href
+ 
  // Add a pop state event listener.
  window.addEventListener ('popstate', function (evt) {
+  // <Needed for browsers (like iOS8) that pop the state at page load.>
+  var onload_pop = !ever_pushed_something && location.href == initial_url
+  ever_pushed_something = true
+  if (onload_pop) return
+  // </Needed for browsers (like iOS8) that pop the state at page load./>
+  
   if (history_control_locked || ((typeof history_main.can_do_popstate != "undefined") && (!history_main.can_do_popstate(evt.state)))) {
    set_page_state (history_main.current_state, undefined, false, true)
    return
   }
+  
   history_control_locked = true
   if (evt.state == null) return; set_page_state (evt.state, undefined, false)
  })
@@ -74,6 +84,8 @@ function history_control_object (settings) {
   // Set the title and run the HTML5 History API pushState / replaceState function.
   document.title = (typeof current_title != "undefined") ? current_title : ""
   if ((record_history == true) || (!!ignore_history)) history[(first_load ? 'replace' : 'push') + 'State'] (new_state, current_title, current_url)
+  
+  ever_pushed_something = true // Needed for browsers (like iOS8) that pop the state at page load.
   
   // Update the current state variable.
   history_main.current_state = new_state
