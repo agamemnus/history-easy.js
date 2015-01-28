@@ -85,7 +85,7 @@ function history_control_object (settings) {
   document.title = (typeof current_title != "undefined") ? current_title : ""
   if ((record_history == true) || (!!ignore_history)) history[(first_load ? 'replace' : 'push') + 'State'] (new_state, current_title, current_url)
   
-  ever_pushed_something = true // Needed for browsers (like iOS8) that pop the state at page load.
+  if (!first_load) ever_pushed_something = true // Needed for browsers (like iOS8) that pop the state at page load.
   
   // Update the current state variable.
   history_main.current_state = new_state
