@@ -74,9 +74,10 @@ function history_control_object (settings) {
   }
   
   // Set temporary variables.
-  var current_title    = extras[hash].title
-  var current_url      = extras[hash].url
-  var current_callback = extras[hash].callback
+  var current_extras   = extras[hash]
+  var current_title    = current_extras ? current_extras.title    : undefined
+  var current_url      = current_extras ? current_extras.url      : undefined
+  var current_callback = current_extras ? current_extras.callback : undefined
   
   // Clear history_main.url and history_main.callback.
   delete (history_main.url); delete (history_main.callback)
