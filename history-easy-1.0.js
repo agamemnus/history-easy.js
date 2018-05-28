@@ -1,4 +1,4 @@
-// History-easy.js version 1.02 by Michael Romanovsky. License: public domain.
+// History-easy.js version 1.03 by Michael Romanovsky. License: public domain.
 
 // If you find this useful and would like to leave a financial gratuity, you can use this link:
 // https://www.gittip.com/agamemnus/
@@ -27,7 +27,7 @@ function history_control_object (settings) {
  var initial_url = location.href
  
  // Add a pop state event listener.
- window.addEventListener ('popstate', function (evt) {
+ window.addEventListener('popstate', function (evt) {
   // <Needed for browsers (like iOS8) that pop the state at page load.>
   var onload_pop = !ever_pushed_something && location.href == initial_url
   ever_pushed_something = true
@@ -35,22 +35,27 @@ function history_control_object (settings) {
   // </Needed for browsers (like iOS8) that pop the state at page load./>
   
   if (history_control_locked || ((typeof history_main.can_do_popstate != "undefined") && (!history_main.can_do_popstate(evt.state)))) {
-   set_page_state (history_main.current_state, undefined, false, true)
+   set_page_state(history_main.current_state, undefined, false, true)
    return
   }
   
   history_control_locked = true
-  if (evt.state == null) return; set_page_state (evt.state, undefined, false)
+  if (evt.state == null) return; set_page_state(evt.state, undefined, false)
  })
-
+ 
+ history_main.complete = function () {
+  if (history_main.defer) {history_main.defer(); delete (history_main.defer)}
+  if (history_main.defer_callback) {history_main.defer_callback(); delete (history_main.defer_callback)}
+ }
+ 
  function set_page_state (new_state, settings, record_history, ignore_history) {
   // Update history_main.app_url_vars to match new_state.
   if (typeof history_main.app_url_vars != "undefined") {
    for (var i in history_main.app_url_vars) {delete (history_main.app_url_vars[i])}
-   merge_into (history_main.app_url_vars, new_state)
+   merge_into(history_main.app_url_vars, new_state)
   }
   
-  var hash = formUrlVars (new_state, {record_undefined_values: false})
+  var hash = formUrlVars(new_state, {record_undefined_values: false})
   
   // Set the title, url, and callback, if they exist in settings.
   if (typeof settings != "undefined") {
@@ -83,8 +88,11 @@ function history_control_object (settings) {
   delete (history_main.url); delete (history_main.callback)
   
   // Set the title and run the HTML5 History API pushState / replaceState function.
-  document.title = (typeof current_title != "undefined") ? current_title : ""
-  if ((record_history == true) || (!!ignore_history)) history[(first_load ? 'replace' : 'push') + 'State'] (new_state, current_title, current_url)
+  function change_url_and_title () {
+   document.title = (typeof current_title != "undefined") ? current_title : ""
+   if ((record_history == true) || (!!ignore_history)) history[(first_load ? 'replace' : 'push') + 'State'](new_state, current_title, current_url)
+  }
+  if (settings && (settings.defer_url_and_title || settings.defer)) {history_main.defer = change_url_and_title} else {change_url_and_title()}
   
   if (!first_load) ever_pushed_something = true // Needed for browsers (like iOS8) that pop the state at page load.
   
@@ -97,12 +105,12 @@ function history_control_object (settings) {
   // Don't run anything if "ignore_history" is true.
   if (!ignore_history) {
    if (typeof history_main.onstatechange != "undefined") {
-    history_main.onstatechange (new_state, function () {
+    history_main.onstatechange(new_state, function () {
     history_control_locked = false
-    if (typeof current_callback != "undefined") current_callback ()})
+    if (typeof current_callback != "undefined") current_callback()})
    } else {
      history_control_locked = false
-    if (typeof current_callback != "undefined") current_callback ()
+    if (typeof current_callback != "undefined") current_callback()
    }
   }
  }
@@ -113,21 +121,21 @@ function history_control_object (settings) {
   history_control_locked = true
   if (typeof new_state == "undefined") new_state = {}
   if (typeof settings  == "undefined") settings  = {}
-  new_state = shallowcopy (new_state)
-  settings  = shallowcopy (settings)
+  new_state = shallowcopy(new_state)
+  settings  = shallowcopy(settings)
   // On first load, run a destructive function that merges the contents window.location with "history_main.app_url_vars".
   // On first load, set the initial page variable's (default: "page") value.
   if ((first_load == true) && (history_main.overwrite_first_state == true)) {
-   getUrlVars (new_state)
+   getUrlVars(new_state)
    if (typeof history_main[var_name] == "undefined") history_main[var_name] = history_main.initial_page
   }
   if (typeof new_state[var_name] == "undefined") new_state[var_name] = history_main[var_name]
   
   // Run the .onbeforestatechange function property if it exists.
   if (typeof history_main.onbeforestatechange != "undefined") {
-   history_main.onbeforestatechange (new_state, settings, function () {set_page_state (new_state, settings, true)})
+   history_main.onbeforestatechange(new_state, settings, function () {set_page_state(new_state, settings, true)})
   } else {
-   set_page_state (new_state, settings, true)
+   set_page_state(new_state, settings, true)
   }
  }
  
@@ -171,7 +179,7 @@ function history_control_object (settings) {
   for (var i in source) {
    var property = source[i]
    if ((typeof property != 'object') || (!(property instanceof Array))) {copy[i] = property; continue}
-   copy[i] = property.slice ()
+   copy[i] = property.slice()
   }
   return copy
  }
