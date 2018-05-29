@@ -101,7 +101,8 @@ function history_control_object (settings) {
   
   if (first_load == true) first_load = false
   
-  // Run the ".onstatechange" function property if it exists, then run the "current_callback" function. Otherwise, just run the "current_callback" function.
+  // Run the ".onstatechange" function property if it exists, and then run the "current_callback" function.
+  // Otherwise, just run the "current_callback" function.
   // Don't run anything if "ignore_history" is true.
   if (!ignore_history) {
    if (typeof history_main.onstatechange != "undefined") {
@@ -113,8 +114,37 @@ function history_control_object (settings) {
     if (typeof current_callback != "undefined") current_callback()
    }
   }
+  
+  // Remove various elements in "settings.element_container".
+  if (settings.element_container) {
+   var container = settings.element_container, arr = []
+   for (var prop in container) {
+   if (typeof container[prop] == "function") arr.push(prop)}
+   if (arr.includes(new_state.page)) {
+    var old_element = container.element, old_elements = container.elements
+    container.element = undefined; container.elements = []
+    function run_it () {
+     if (old_element && old_element.parentNode) {old_element.parentNode.removeChild(old_element)}
+     if (old_elements) {old_elements.forEach(function (element) {if (element.parentNode) element.parentNode.removeChild(element)})}
+    }
+    if (!settings.defer && !settings.defer_callback) {run_it()} else {history_main.defer_callback = run_it}
+   }
+  }
  }
  
+ history_main.add_preset = function (init) {
+  if (init.new_state) var preset_new_state = shallowcopy(init.new_state)
+  if (init.settings) var preset_settings = shallowcopy(init.settings)
+  return {
+   complete    : function () {history_main.complete.apply(null, arguments)},
+   insert_page : function () {history_main.insert_page.apply(null, arguments)},
+   load_page   : function (new_state, settings) {
+    if (preset_new_state) merge_into(new_state, preset_new_state)
+    if (preset_settings) merge_into(settings, preset_settings)
+    history_main.load_page.apply(history_main, arguments)
+   }
+  }
+ }
  
  history_main.load_page = function (new_state, settings) {
   if (history_control_locked) return
@@ -130,7 +160,7 @@ function history_control_object (settings) {
    if (typeof history_main[var_name] == "undefined") history_main[var_name] = history_main.initial_page
   }
   if (typeof new_state[var_name] == "undefined") new_state[var_name] = history_main[var_name]
-  
+    
   // Run the .onbeforestatechange function property if it exists.
   if (typeof history_main.onbeforestatechange != "undefined") {
    history_main.onbeforestatechange(new_state, settings, function () {set_page_state(new_state, settings, true)})
@@ -138,7 +168,6 @@ function history_control_object (settings) {
    set_page_state(new_state, settings, true)
   }
  }
- 
  
  // Form a GET URL string from an array.
  function formUrlVars (variable_list, options) {
