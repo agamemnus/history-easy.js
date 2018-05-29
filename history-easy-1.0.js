@@ -97,6 +97,7 @@ function history_control_object (settings) {
   if (!first_load) ever_pushed_something = true // Needed for browsers (like iOS8) that pop the state at page load.
   
   // Update the current state variable.
+  var old_state = history_main.current_state
   history_main.current_state = new_state
   
   if (first_load == true) first_load = false
@@ -106,9 +107,11 @@ function history_control_object (settings) {
   // Don't run anything if "ignore_history" is true.
   if (!ignore_history) {
    if (typeof history_main.onstatechange != "undefined") {
-    history_main.onstatechange(new_state, function () {
-    history_control_locked = false
-    if (typeof current_callback != "undefined") current_callback()})
+    history_main.onstatechange(
+     new_state,
+     function () {history_control_locked = false; if (typeof current_callback != "undefined") current_callback()},
+     old_state
+    )
    } else {
      history_control_locked = false
     if (typeof current_callback != "undefined") current_callback()
@@ -116,7 +119,7 @@ function history_control_object (settings) {
   }
   
   // Remove various elements in "settings.element_container".
-  if (settings.element_container) {
+  if (settings && settings.element_container) {
    var container = settings.element_container, arr = []
    for (var prop in container) {
    if (typeof container[prop] == "function") arr.push(prop)}
