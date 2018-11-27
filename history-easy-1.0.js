@@ -90,8 +90,16 @@ function history_control_object (settings) {
   // Set the title and run the HTML5 History API pushState / replaceState function.
   function change_url_and_title () {
    document.title = (typeof current_title != "undefined") ? current_title : ""
-   if ((record_history == true) || (!!ignore_history)) history[(first_load ? 'replace' : 'push') + 'State'](new_state, current_title, current_url)
+   // Set the history state url to undefined if it's equal to "" -- this is a fix for Google's crawler bot.
+   if ((record_history == true) || (!!ignore_history)) {
+    var state_action = (first_load ? 'replace' : 'push') + 'State'
+    // The Google web crawler robot won't accept undefined values in state objects in history.* commands.
+    var new_state_temp = Object.assign({}, new_state)
+    for (var prop in new_state_temp) {if (typeof new_state_temp[prop] == "undefined") delete(new_state_temp[prop])}
+    history[state_action](new_state_temp, current_title, current_url)
+   }
   }
+  
   if (settings && (settings.defer_url_and_title || settings.defer)) {history_main.defer = change_url_and_title} else {change_url_and_title()}
   
   if (!first_load) ever_pushed_something = true // Needed for browsers (like iOS8) that pop the state at page load.
