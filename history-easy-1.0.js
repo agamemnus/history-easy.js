@@ -224,3 +224,5 @@ function history_control_object (settings) {
   return copy
  }
 }
+
+if ((typeof module === "object") && module.exports) module.exports = history_control_object
