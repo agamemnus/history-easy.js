@@ -1,0 +1,10 @@
+{
+ "name": "history-easy.js",
+ "version" : "2.0.0",
+ "description": "Easy HTML5 history wrapper for modern (IE10+) browsers.",
+ "main": "history-easy-1.0.js",
+ "dependencies": {},
+ "homepage": "https://github.com/agamemnus/history-easy.js",
+ "license": "The Unlicense",
+ "repository": {"type": "git", "url": "git+https://github.com/agamemnus/history-easy.js.git"}
+}
