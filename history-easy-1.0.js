@@ -1,4 +1,4 @@
-// History-easy.js version 1.04 by Michael Romanovsky. License: public domain.
+// History-easy.js version 1.05 by Michael Romanovsky. License: public domain.
 
 // If you find this useful and would like to leave a financial gratuity, you can use this link:
 // https://www.gittip.com/agamemnus/
@@ -167,7 +167,7 @@ function history_control_object (settings) {
   // On first load, run a destructive function that merges the contents window.location with "history_main.app_url_vars".
   // On first load, set the initial page variable's (default: "page") value.
   if ((first_load == true) && (history_main.overwrite_first_state == true)) {
-   getUrlVars(new_state)
+   new_state = Object.assign(new_state, getUrlVars())
    if (typeof history_main[var_name] == "undefined") history_main[var_name] = history_main.initial_page
   }
   if (typeof new_state[var_name] == "undefined") new_state[var_name] = history_main[var_name]
@@ -191,18 +191,21 @@ function history_control_object (settings) {
   return return_value
  }
  
- // Get URL variables from window.location and put them into variable_object as key/value pairs. Returns variable_object.
- function getUrlVars (variable_object) {
-  if ((typeof variable_object != "object") || (variable_object == null)) var variable_object = {}
-  var variable_list = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&')
-  var curlen = variable_list.length
-  for (var i = 0; i < curlen; i++) {
-   var current_variable = variable_list[i].split('=')
-   if (typeof current_variable[1] == "undefined") continue
-   variable_object[current_variable[0]] = decodeURIComponent(current_variable[1])
+  // Get URL variables from window.location or string and put them into a result object as key/value pairs. Returns variableObject.
+  function getUrlVars (input) {
+   var result = {}
+   if (typeof input == "undefined") input = window.location.href
+   var pound_pos = input.lastIndexOf("#") 
+   if (pound_pos != -1) input = input.substring(0, input.lastIndexOf("#"))
+   var variableList = input.slice(input.indexOf('?') + 1).split('&')
+   var curlen = variableList.length
+   for (var i = 0; i < curlen; i++) {
+    var currentVariable = variableList[i].split('=')
+    if (typeof currentVariable[1] == "undefined") continue
+    result[currentVariable[0]] = decodeURIComponent(currentVariable[1])
+   }
+   return result
   }
-  return variable_object
- }
  
  // Merge the source into the target.
  function merge_into (target, source) {
@@ -224,5 +227,6 @@ function history_control_object (settings) {
   return copy
  }
 }
+
 
 if ((typeof module === "object") && module.exports) module.exports = history_control_object
