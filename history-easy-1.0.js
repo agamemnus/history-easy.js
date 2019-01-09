@@ -21,7 +21,7 @@ function history_control_object (settings) {
  var next_title = undefined, next_url = undefined, next_callback = undefined
   
  var first_load = true
- var history_control_locked = false
+ history_main.locked = false
  
  var ever_pushed_something = false // Needed for browsers (like iOS8) that pop the state at page load.
  var initial_url = location.href
@@ -34,12 +34,12 @@ function history_control_object (settings) {
   if (onload_pop) return
   // </Needed for browsers (like iOS8) that pop the state at page load./>
   
-  if (history_control_locked || ((typeof history_main.can_do_popstate != "undefined") && (!history_main.can_do_popstate(evt.state)))) {
+  if (history_main.locked || ((typeof history_main.can_do_popstate != "undefined") && (!history_main.can_do_popstate(evt.state)))) {
    set_page_state(history_main.current_state, undefined, false, true)
    return
   }
   
-  history_control_locked = true
+  history_main.locked = true
   if (evt.state == null) return; set_page_state(evt.state, undefined, false)
  })
  
@@ -117,11 +117,11 @@ function history_control_object (settings) {
    if (typeof history_main.onstatechange != "undefined") {
     history_main.onstatechange(
      new_state,
-     function () {history_control_locked = false; if (typeof current_callback != "undefined") current_callback()},
+     function () {history_main.locked = false; if (typeof current_callback != "undefined") current_callback()},
      old_state
     )
    } else {
-     history_control_locked = false
+    history_main.locked = false
     if (typeof current_callback != "undefined") current_callback()
    }
   }
@@ -158,8 +158,8 @@ function history_control_object (settings) {
  }
  
  history_main.load_page = function (new_state, settings) {
-  if (history_control_locked) return
-  history_control_locked = true
+  if (history_main.locked) return
+  history_main.locked = true
   if (typeof new_state == "undefined") new_state = {}
   if (typeof settings  == "undefined") settings  = {}
   new_state = shallowcopy(new_state)
@@ -227,6 +227,3 @@ function history_control_object (settings) {
   return copy
  }
 }
-
-
-if ((typeof module === "object") && module.exports) module.exports = history_control_object
