@@ -1,4 +1,4 @@
-// History-easy.js version 1.05 by Michael Romanovsky. License: public domain.
+// History-easy.js version 1.06 by Michael Romanovsky. License: public domain.
 
 // If you find this useful and would like to leave a financial gratuity, you can use this link:
 // https://www.gittip.com/agamemnus/
